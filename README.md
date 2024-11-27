@@ -195,6 +195,11 @@ python test.py --source-languages Spanish French
 python test.py --base-url http://your-server:8000
 ```
 
+An output example:
+
+![test](test.png)
+
+
 ## Contributing
 
 1. Fork the repository
