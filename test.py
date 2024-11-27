@@ -1,6 +1,5 @@
 import requests
-import json
-from typing import List, Dict, Tuple
+from typing import List
 from rich.console import Console
 from rich.table import Table
 import time
