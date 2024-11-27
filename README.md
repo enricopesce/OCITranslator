@@ -16,7 +16,7 @@ Oracle Cloud Infrastructure (OCI) Generative AI offers several compelling advant
 - **Context Awareness**: Advanced language models that understand context and nuances
 - **Integration Friendly**: Easy integration with existing cloud infrastructure and applications
 
-This project serves as a practical example of building a translation service that can handle multiple languages while maintaining high quality translations. It includes a comprehensive test suite to ensure reliability across different language pairs.
+This project serves as a practical example of building a translation service that can handle multiple languages while maintaining high quality translations. It includes a comprehensive test script to ensure reliability across different language pairs.
 
 ## Features
 
@@ -45,7 +45,6 @@ This project serves as a practical example of building a translation service tha
 ├── .env             # Environment variables (create this)
 └── requirements.txt  # Project dependencies
 ```
-
 
 ## Prerequisites
 
@@ -93,6 +92,13 @@ python main.py
 
 The server will start on `http://0.0.0.0:8000` with auto-reload enabled.
 
+## API Documentation
+
+Once the server is running, you can access:
+
+- Interactive API docs: `http://localhost:8000/docs`
+- Alternative API docs: `http://localhost:8000/redoc`
+
 ### API Endpoints
 
 #### POST /translate
@@ -117,7 +123,48 @@ Translates text to the specified target language.
 }
 ```
 
-## Testing
+[Previous sections remain the same...]
+
+### Testing with cURL
+
+You can test the translation service using cURL commands:
+
+```bash
+# Basic translation to Spanish
+curl -X POST http://localhost:8000/translate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hello, how are you?",
+    "target_language": "es"
+  }'
+
+# Translation to French
+curl -X POST http://localhost:8000/translate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Artificial Intelligence is amazing",
+    "target_language": "fr"
+  }'
+
+# Translation to Japanese
+curl -X POST http://localhost:8000/translate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "I love programming",
+    "target_language": "ja"
+  }'
+```
+
+Example response:
+
+```json
+{
+  "translated_text": "¡Hola, cómo estás?",
+  "target_language": "es"
+}
+```
+
+## Testing by script
 
 The project includes a comprehensive test script (`test.py`) that validates translations across multiple languages with detailed reporting.
 
@@ -147,13 +194,6 @@ python test.py --source-languages Spanish French
 # Test with custom server
 python test.py --base-url http://your-server:8000
 ```
-
-## API Documentation
-
-Once the server is running, you can access:
-
-- Interactive API docs: `http://localhost:8000/docs`
-- Alternative API docs: `http://localhost:8000/redoc`
 
 ## Contributing
 
