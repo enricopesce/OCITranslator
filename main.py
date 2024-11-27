@@ -15,7 +15,8 @@ app = FastAPI(title="OCI Translator")
 llm = ChatOCIGenAI(
     model_id=os.getenv('OCI_MODEL_ID'),
     service_endpoint=os.getenv('OCI_SERVICE_ENDPOINT'),
-    compartment_id=os.getenv('OCI_COMPARTMENT_ID')
+    compartment_id=os.getenv('OCI_COMPARTMENT_ID'),
+    model_kwargs={"temperature": 0.0, "max_tokens": 1024}
 )
 
 # Rest of your code remains the same...
