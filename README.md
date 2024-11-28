@@ -2,7 +2,9 @@
 
 ## Introduction
 
-The OCI Translator demonstrates the power of leveraging [Oracle Cloud Infrastructure's Generative AI services](https://www.oracle.com/artificial-intelligence/generative-ai/generative-ai-service/) for building practical language translation applications. This project showcases how enterprise-grade AI capabilities can be integrated into a modern web application while maintaining high performance and reliability.
+The OCI Translator demonstrates the power of using [Oracle Cloud Infrastructure's Generative AI services](https://www.oracle.com/artificial-intelligence/generative-ai/generative-ai-service/) to build practical language applications. 
+
+This project showcases how Generative AI services can translate text with a modern LLM that understands context and nuances and how to integrate it into a modern web application.
 
 ### Why OCI Generative AI?
 
@@ -15,8 +17,6 @@ Oracle Cloud Infrastructure (OCI) Generative AI offers several compelling advant
 - **Multilingual Support**: Comprehensive support for major world languages with high accuracy
 - **Context Awareness**: Advanced language models that understand context and nuances
 - **Integration Friendly**: Easy integration with existing cloud infrastructure and applications
-
-This project serves as a practical example of building a translation service that can handle multiple languages while maintaining high quality translations. It includes a comprehensive test script to ensure reliability across different language pairs.
 
 # Supported Languages
 
@@ -74,7 +74,6 @@ python main.py
 
 2. The API will be available at `http://localhost:8000`
 
-3. Access the Swagger UI documentation at `http://localhost:8000/docs`
 
 ### API Endpoint
 
@@ -153,19 +152,6 @@ Running without parameters will execute tests using predefined sample texts in a
 python test.py
 ```
 
-This will test translations between all language pairs using sample texts in:
-
-- Arabic (ar)
-- Chinese (zh)
-- English (en)
-- French (fr)
-- German (de)
-- Italian (it)
-- Japanese (ja)
-- Korean (ko)
-- Portuguese (pt)
-- Spanish (es)
-
 ### Single Translation Mode
 
 For testing a specific text with defined source and target languages:
@@ -223,11 +209,3 @@ Total characters processed: 19
 Average characters per translation: 19.0
 ================================================================================
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
