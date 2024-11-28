@@ -1,323 +1,204 @@
 import requests
-from typing import List
-from rich.console import Console
-from rich.table import Table
-import time
+from itertools import permutations
 import argparse
+from typing import List, Dict
+import sys
+from rich.console import Console
+from rich.progress import track
+from rich.table import Table
+from rich.panel import Panel
+from rich import box
+import time
+from rich.live import Live
 from datetime import datetime
 
-LANGUAGES = {
-    "Arabic": {
-        "iso_code": "ar",
-        "sample_texts": [
-            "التكنولوجيا تتطور بسرعة كبيرة",  # Technology evolves rapidly
-            "أحب برمجة الكمبيوتر",  # I love computer programming
-            "العلم نور والجهل ظلام"  # Knowledge is light and ignorance is darkness
+class TranslationTester:
+    def __init__(self, base_url: str):
+        self.base_url = base_url.rstrip('/')
+        self.languages = [
+            'ar', 'zh', 'en', 'fr', 'de', 
+            'it', 'ja', 'ko', 'pt', 'es'
         ]
-    },
-    "Chinese": {
-        "iso_code": "zh",
-        "sample_texts": [
-            "科技发展日新月异",  # Technology develops rapidly
-            "我喜欢编程",  # I love programming
-            "知识就是力量"  # Knowledge is power
-        ]
-    },
-    "English": {
-        "iso_code": "en",
-        "sample_texts": [
-            "Technology evolves rapidly",
-            "I love computer programming",
-            "Knowledge is power"
-        ]
-    },
-    "French": {
-        "iso_code": "fr",
-        "sample_texts": [
-            "La technologie évolue rapidement",
-            "J'aime la programmation informatique",
-            "Le savoir est le pouvoir"
-        ]
-    },
-    "German": {
-        "iso_code": "de",
-        "sample_texts": [
-            "Technologie entwickelt sich schnell",
-            "Ich liebe Computerprogrammierung",
-            "Wissen ist Macht"
-        ]
-    },
-    "Italian": {
-        "iso_code": "it",
-        "sample_texts": [
-            "La tecnologia si evolve rapidamente",
-            "Amo la programmazione del computer",
-            "La conoscenza è potere"
-        ]
-    },
-    "Japanese": {
-        "iso_code": "ja",
-        "sample_texts": [
-            "技術は急速に進化する",
-            "コンピュータープログラミングが大好きです",
-            "知識は力なり"
-        ]
-    },
-    "Korean": {
-        "iso_code": "ko",
-        "sample_texts": [
-            "기술은 빠르게 발전합니다",
-            "컴퓨터 프로그래밍을 좋아합니다",
-            "지식이 힘이다"
-        ]
-    },
-    "Portuguese": {
-        "iso_code": "pt",
-        "sample_texts": [
-            "A tecnologia evolui rapidamente",
-            "Eu amo programação de computadores",
-            "Conhecimento é poder"
-        ]
-    },
-    "Spanish": {
-        "iso_code": "es",
-        "sample_texts": [
-            "La tecnología evoluciona rápidamente",
-            "Me encanta la programación de computadoras",
-            "El conocimiento es poder"
-        ]
-    }
-}
-
-def list_available_languages():
-    """List all available languages with their details."""
-    console = Console()
-    table = Table(show_header=True, header_style="bold magenta")
-    table.add_column("Language")
-    table.add_column("ISO Code")
-    table.add_column("Sample Texts Count")
-
-    for lang, info in sorted(LANGUAGES.items()):
-        table.add_row(
-            lang,
-            info["iso_code"],
-            str(len(info["sample_texts"]))
-        )
-
-    console.print("\n=== Available Languages ===")
-    console.print(table)
-
-def validate_languages(languages: List[str]) -> List[str]:
-    """Validate the provided languages and return valid ones."""
-    valid_languages = []
-    invalid_languages = []
-    
-    for lang in languages:
-        if lang in LANGUAGES:
-            valid_languages.append(lang)
-        else:
-            invalid_languages.append(lang)
-    
-    if invalid_languages:
-        console = Console()
-        console.print(f"\n[yellow]Warning: The following languages are not supported: {', '.join(invalid_languages)}[/yellow]")
-        console.print("Use --list-languages to see available languages.")
-    
-    return valid_languages
-
-def log_result(console: Console, result: dict, stats: dict):
-    """Log translation result in real-time with timestamp and update character counts."""
-    timestamp = datetime.now().strftime("%H:%M:%S")
-    
-    if result.get("status") == "success":
-        translated_text = result['translated_text']
-        # Check if translation starts with ERROR
-        if translated_text.startswith("ERROR"):
-            stats["failed"] += 1
-            stats["successful"] -= 1  # Correct the successful count since we're treating this as an error
-            console.print(f"[{timestamp}] [red]✗[/red] {result['source_lang']} ({result['source_iso']}) → {result['target_lang']} ({result['target_iso']})")
-            console.print(f"   Source: {result['original_text']}")
-            console.print(f"   Error: {translated_text}\n")
-        else:
-            # Update character counts for successful translations only
-            input_chars = len(result['original_text'])
-            output_chars = len(translated_text)
-            stats["total_input_chars"] += input_chars
-            stats["total_output_chars"] += output_chars
-            
-            console.print(f"[{timestamp}] [green]✓[/green] {result['source_lang']} ({result['source_iso']}) → {result['target_lang']} ({result['target_iso']})")
-            console.print(f"   Source: {result['original_text']}")
-            console.print(f"   Translation: {translated_text}")
-            console.print(f"   Characters: {input_chars} → {output_chars}\n")
-    else:
-        console.print(f"[{timestamp}] [red]✗[/red] {result['source_lang']} ({result['source_iso']}) → {result['target_lang']} ({result['target_iso']})")
-        console.print(f"   Source: {result['original_text']}")
-        console.print(f"   Error: {result.get('error', 'Unknown error')}\n")
-
-def test_translation_service(base_url: str = "http://localhost:8000", source_languages: List[str] = None):
-    console = Console()
-    
-    # Validate source languages
-    if source_languages:
-        source_languages = validate_languages(source_languages)
-    else:
-        source_languages = sorted(LANGUAGES.keys())
-
-    if not source_languages:
-        console.print("[red]Error: No valid source languages specified for testing.[/red]")
-        return
-
-    # Get all available languages as targets
-    target_languages = sorted(LANGUAGES.keys())
-
-    # Print test configuration
-    console.print("\n=== Translation Service Test Configuration ===")
-    console.print(f"Base URL: {base_url}")
-    console.print(f"Source Language(s): {', '.join(source_languages)}")
-    console.print(f"Target Languages: All available languages")
-    console.print("=" * 50 + "\n")
-
-    # Initialize statistics
-    stats = {
-        "total": 0,
-        "successful": 0,
-        "failed": 0,
-        "total_input_chars": 0,
-        "total_output_chars": 0,
-        "start_time": datetime.now()
-    }
-
-    # Test translations
-    for source_language in source_languages:
-        console.print(f"\n[bold cyan]=== Testing translations from {source_language} ===[/bold cyan]\n")
+        self.language_names = {
+            'ar': 'Arabic',
+            'zh': 'Chinese',
+            'en': 'English',
+            'fr': 'French',
+            'de': 'German',
+            'it': 'Italian',
+            'ja': 'Japanese',
+            'ko': 'Korean',
+            'pt': 'Portuguese',
+            'es': 'Spanish'
+        }
+        self.sample_texts = {
+            'en': [
+                "Hello, how are you today?",
+                "The weather is beautiful",
+                "I love to travel"
+            ],
+            'es': [
+                "¿Cómo estás hoy?",
+                "El tiempo está hermoso",
+                "Me encanta viajar"
+            ],
+            'fr': [
+                "Comment allez-vous aujourd'hui?",
+                "Le temps est magnifique",
+                "J'aime voyager"
+            ],
+            'de': [
+                "Wie geht es dir heute?",
+                "Das Wetter ist schön",
+                "Ich reise gerne"
+            ],
+            'it': [
+                "Come stai oggi?",
+                "Il tempo è bellissimo",
+                "Amo viaggiare"
+            ],
+            'pt': [
+                "Como você está hoje?",
+                "O tempo está bonito",
+                "Eu amo viajar"
+            ],
+            'zh': [
+                "今天你好吗？",
+                "天气很好",
+                "我爱旅行"
+            ],
+            'ja': [
+                "今日はお元気ですか？",
+                "天気が良いですね",
+                "旅行が大好きです"
+            ],
+            'ko': [
+                "오늘 어떠신가요?",
+                "날씨가 아름답습니다",
+                "나는 여행을 좋아합니다"
+            ],
+            'ar': [
+                "كيف حالك اليوم؟",
+                "الطقس جميل",
+                "أحب السفر"
+            ]
+        }
+        self.console = Console()
         
-        # Get sample texts for the source language
-        for text in LANGUAGES[source_language]["sample_texts"]:
-            # Test translation to all other languages
-            for target_language in [lang for lang in target_languages if lang != source_language]:
-                try:
-                    stats["total"] += 1
-                    source_iso = LANGUAGES[source_language]["iso_code"]
-                    target_iso = LANGUAGES[target_language]["iso_code"]
-                    
-                    # Prepare request
-                    payload = {
-                        "text": text,
-                        "target_language": target_iso
-                    }
-                    
-                    # Make request
-                    response = requests.post(
-                        f"{base_url}/translate",
-                        json=payload,
-                        timeout=10
-                    )
-                    
-                    # Process result
-                    if response.status_code == 200:
-                        result = response.json()
-                        stats["successful"] += 1  # This might be decremented in log_result if ERROR is found
-                        log_result(console, {
-                            "status": "success",
-                            "source_lang": source_language,
-                            "target_lang": target_language,
-                            "source_iso": source_iso,
-                            "target_iso": target_iso,
-                            "original_text": text,
-                            "translated_text": result["translated_text"]
-                        }, stats)
-                    else:
-                        stats["failed"] += 1
-                        log_result(console, {
-                            "status": "error",
-                            "source_lang": source_language,
-                            "target_lang": target_language,
-                            "source_iso": source_iso,
-                            "target_iso": target_iso,
-                            "original_text": text,
-                            "error": f"HTTP {response.status_code}"
-                        }, stats)
-                    
-                    time.sleep(0.5)  # Small delay to prevent rate limiting
-                        
-                except Exception as e:
-                    stats["failed"] += 1
-                    log_result(console, {
-                        "status": "error",
-                        "source_lang": source_language,
-                        "target_lang": target_language,
-                        "source_iso": source_iso,
-                        "target_iso": target_iso,
-                        "original_text": text,
-                        "error": str(e)
-                    }, stats)
-    
-    # Print final statistics
-    duration = datetime.now() - stats["start_time"]
-    console.print("\n=== Test Statistics ===")
-    console.print(f"Total translations attempted: {stats['total']}")
-    console.print(f"Successful translations: [green]{stats['successful']}[/green]")
-    console.print(f"Failed translations: [red]{stats['failed']}[/red]")
-    success_rate = (stats['successful'] / stats['total'] * 100) if stats['total'] > 0 else 0
-    console.print(f"Success rate: {success_rate:.1f}%")
-    console.print("\n=== Character Statistics ===")
-    console.print(f"Total input characters: {stats['total_input_chars']}")
-    console.print(f"Total output characters: {stats['total_output_chars']}")
-    console.print(f"Total characters: {stats['total_output_chars']+stats['total_input_chars']}")
-    avg_input = stats['total_input_chars'] / stats['total'] if stats['total'] > 0 else 0
-    avg_output = stats['total_output_chars'] / stats['successful'] if stats['successful'] > 0 else 0
-    console.print(f"Average characters per request: {avg_input:.1f} → {avg_output:.1f}")
-    console.print(f"\nTotal test duration: {duration}")
+    def translate(self, text: str, source_language: str, target_language: str) -> tuple:
+        """Make a translation request to the API and measure time."""
+        endpoint = f"{self.base_url}/translate"
+        payload = {
+            "text": text,
+            "source_language": source_language,
+            "target_language": target_language
+        }
+        
+        start_time = time.time()
+        try:
+            response = requests.post(endpoint, json=payload)
+            response.raise_for_status()
+            end_time = time.time()
+            return response.json(), end_time - start_time
+        except requests.exceptions.RequestException as e:
+            self.console.print(f"[red]Error making request: {str(e)}[/red]")
+            sys.exit(1)
+
+    def test_all_combinations(self):
+        """Test translation between all language pairs with native sample texts."""
+        results = []
+        total_tests = sum(len(texts) * (len(self.languages) - 1) 
+                         for texts in self.sample_texts.values())
+        
+        self.console.print(Panel(
+            f"Starting translation tests\n"
+            f"API URL: [cyan]{self.base_url}[/cyan]\n"
+            f"Total translations to perform: [cyan]{total_tests}[/cyan]\n"
+            f"Timestamp: [cyan]{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}[/cyan]", 
+            title="Translation Testing", 
+            border_style="blue"))
+
+        total_time = 0
+        total_chars = 0
+
+        with Live(auto_refresh=False) as live:
+            for source_lang, texts in self.sample_texts.items():
+                live.update(f"[yellow]Processing source language: {self.language_names[source_lang]}[/yellow]")
+                live.refresh()
+                
+                for test_text in texts:
+                    for target_lang in self.languages:
+                        if target_lang != source_lang:
+                            result, translation_time = self.translate(test_text, source_lang, target_lang)
+                            translated_text = result['translated_text']
+                            
+                            total_chars_current = len(test_text) + len(translated_text)
+                            total_chars += total_chars_current
+                            total_time += translation_time
+                            
+                            results.append({
+                                'source_language': source_lang,
+                                'target_language': target_lang,
+                                'original_text': test_text,
+                                'translated_text': translated_text,
+                                'translation_time': translation_time,
+                                'total_chars': total_chars_current
+                            })
+                            
+                            live.update(
+                                f"[yellow]{self.language_names[source_lang]}[/yellow] → "
+                                f"[cyan]{self.language_names[target_lang]}[/cyan]\n"
+                                f"Time: [green]{translation_time:.3f}s[/green] | "
+                                f"Chars: [blue]{total_chars_current}[/blue]"
+                            )
+                            live.refresh()
+        
+        self.console.print(f"\n[bold green]Testing completed![/bold green]")
+        self.console.print(f"Total time: [yellow]{total_time:.2f}s[/yellow]")
+        self.console.print(f"Total characters: [blue]{total_chars}[/blue]")
+        self.console.print(f"Average time per translation: [green]{total_time/len(results):.3f}s[/green]")
+        
+        return results
+
+    def display_results(self, results: List[Dict]):
+        """Display results in a formatted table."""
+        table = Table(show_header=True, 
+                     header_style="bold magenta",
+                     box=box.ROUNDED,
+                     title="Translation Results",
+                     title_style="bold blue")
+        
+        table.add_column("From", style="yellow", width=12)
+        table.add_column("To", style="cyan", width=12)
+        table.add_column("Original Text", style="green", width=30)
+        table.add_column("Translated Text", style="blue", width=30)
+        table.add_column("Time (s)", style="magenta", width=10)
+        table.add_column("Chars", style="red", width=10)
+        
+        for result in results:
+            table.add_row(
+                self.language_names[result['source_language']],
+                self.language_names[result['target_language']],
+                result['original_text'],
+                result['translated_text'],
+                f"{result['translation_time']:.3f}",
+                str(result['total_chars'])
+            )
+        
+        self.console.print(table)
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Test the translation service with specific language options.',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  List available languages:
-    python test_translation.py --list-languages
-    
-  Test specific source language(s):
-    python test_translation.py --source-languages Spanish French
-    
-  Test with custom server:
-    python test_translation.py --source-languages Spanish --base-url http://your-server:8000
-    """
-    )
-    
-    parser.add_argument(
-        '--list-languages',
-        action='store_true',
-        help='List all available languages and exit'
-    )
-    parser.add_argument(
-        '--source-languages',
-        nargs='+',
-        help='Specify source languages to test (e.g., "Spanish French")'
-    )
-    parser.add_argument(
-        '--base-url', 
-        type=str, 
-        default="http://localhost:8000",
-        help='Base URL of the translation service (default: http://localhost:8000)'
-    )
+    parser = argparse.ArgumentParser(description='Test translation API for all language combinations')
+    parser.add_argument('--url', default='http://localhost:8000', 
+                       help='Base URL of the translation API (default: http://localhost:8000)')
     
     args = parser.parse_args()
-
-    if args.list_languages:
-        list_available_languages()
-        return
-
-    try:
-        test_translation_service(
-            base_url=args.base_url,
-            source_languages=args.source_languages
-        )
-    except KeyboardInterrupt:
-        print("\nTest interrupted by user. Exiting...")
-    except Exception as e:
-        print(f"\nAn error occurred: {str(e)}")
+    
+    tester = TranslationTester(args.url)
+    results = tester.test_all_combinations()
+    
+    # Display results in rich formatted table
+    tester.display_results(results)
 
 if __name__ == "__main__":
     main()

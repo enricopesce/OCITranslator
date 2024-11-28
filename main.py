@@ -25,7 +25,7 @@ prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            """You are a professional translator who translates input messages to {output_language} language.
+            """You are a professional translator who translates {input_language} language messages to {output_language} language.
  You must reply only with the translation; nothing else.
  If it is not a literal translation exists, please provide an alternative with the best meaning.
  If it is not possible to offer any translation, please return a message starting with 
@@ -42,19 +42,22 @@ chain = prompt | llm
 # Define request model
 class TranslationRequest(BaseModel):
     text: str
+    source_language: str
     target_language: str
 
 # Define response model
 class TranslationResponse(BaseModel):
     translated_text: str
+    source_language: str
     target_language: str
 
 @app.post("/translate", response_model=TranslationResponse)
 async def translate_text(request: TranslationRequest):
     try:
         # Call the translation chain
-        message = chain.invoke(
+        message = await chain.ainvoke(
             {
+                "input_language": request.source_language,
                 "output_language": request.target_language,
                 "input": request.text,
             }
@@ -63,6 +66,7 @@ async def translate_text(request: TranslationRequest):
         # Return the translation
         return TranslationResponse(
             translated_text=message.content,
+            source_language=request.source_language,
             target_language=request.target_language
         )
     except Exception as e:
