@@ -18,42 +18,26 @@ Oracle Cloud Infrastructure (OCI) Generative AI offers several compelling advant
 
 This project serves as a practical example of building a translation service that can handle multiple languages while maintaining high quality translations. It includes a comprehensive test script to ensure reliability across different language pairs.
 
-## Features
+# Supported Languages
 
-- RESTful API for text translation
-- Powered by OCI's Generative AI model
-- Error handling with descriptive messages
-- Supports the following languages:
-
-  - Arabic (ar)
-  - Chinese (zh)
-  - English (en)
-  - French (fr)
-  - German (de)
-  - Italian (it)
-  - Japanese (ja)
-  - Korean (ko)
-  - Portuguese (pt)
-  - Spanish (es)
-
-## Project Structure
-
-```
-.
-├── main.py           # Main application file
-├── test.py          # Test suite
-├── .env             # Environment variables (create this)
-└── requirements.txt  # Project dependencies
-```
+| Language   | ISO Code |
+| ---------- | -------- |
+| Arabic     | ar       |
+| Chinese    | zh       |
+| English    | en       |
+| French     | fr       |
+| German     | de       |
+| Italian    | it       |
+| Japanese   | ja       |
+| Korean     | ko       |
+| Portuguese | pt       |
+| Spanish    | es       |
 
 ## Prerequisites
 
-- Python 3.9+
-- OCI Account with Generative AI access
-- Required environment variables:
-  - `OCI_MODEL_ID`
-  - `OCI_SERVICE_ENDPOINT`
-  - `OCI_COMPARTMENT_ID`
+- Python 3.8 or higher
+- Oracle Cloud Infrastructure account with access to Generative AI service
+- OCI credentials configured
 
 ## Installation
 
@@ -61,16 +45,18 @@ This project serves as a practical example of building a translation service tha
 
 ```bash
 git clone https://github.com/enricopesce/OCITranslator
-cd OCITranslator
+cd oci-translator
 ```
 
-2. Install dependencies:
+2. Install required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Create a `.env` file in the project root with your OCI credentials:
+## Configuration
+
+1. Create a `.env` file in the project root with your OCI credentials (env.example provided):
 
 ```env
 OCI_MODEL_ID=your_model_id
@@ -78,127 +64,165 @@ OCI_SERVICE_ENDPOINT=your_service_endpoint
 OCI_COMPARTMENT_ID=your_compartment_id
 ```
 
-.env.example file is provided
-
 ## Usage
 
-### Starting the Server
-
-Run the application using:
+1. Start the server:
 
 ```bash
 python main.py
 ```
 
-The server will start on `http://0.0.0.0:8000` with auto-reload enabled.
+2. The API will be available at `http://localhost:8000`
 
-## API Documentation
+3. Access the Swagger UI documentation at `http://localhost:8000/docs`
 
-Once the server is running, you can access:
-
-- Interactive API docs: `http://localhost:8000/docs`
-- Alternative API docs: `http://localhost:8000/redoc`
-
-### API Endpoints
+### API Endpoint
 
 #### POST /translate
 
-Translates text to the specified target language.
+Translates text between supported languages.
 
-**Request Body:**
+Request body:
 
 ```json
 {
-  "text": "Hello, world!",
+  "text": "Hello world",
+  "source_language": "en",
   "target_language": "es"
 }
 ```
 
-**Response:**
+Response:
 
 ```json
 {
-  "translated_text": "¡Hola, mundo!",
+  "translated_text": "Hola mundo",
+  "source_language": "en",
   "target_language": "es"
 }
 ```
 
-[Previous sections remain the same...]
-
-### Testing with cURL
-
-You can test the translation service using cURL commands:
+### Example Usage with cURL
 
 ```bash
-# Basic translation to Spanish
-curl -X POST http://localhost:8000/translate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Hello, how are you?",
-    "target_language": "es"
-  }'
-
-# Translation to French
-curl -X POST http://localhost:8000/translate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Artificial Intelligence is amazing",
-    "target_language": "fr"
-  }'
-
-# Translation to Japanese
-curl -X POST http://localhost:8000/translate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "I love programming",
-    "target_language": "ja"
-  }'
+curl -X POST "http://localhost:8000/translate" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "text": "Hello world",
+           "source_language": "en",
+           "target_language": "es"
+         }'
 ```
 
-Example response:
+## Error Handling
+
+The API returns appropriate HTTP status codes and error messages:
+
+- 400: Bad Request (invalid language code/name or impossible translation)
+- 500: Internal Server Error (unexpected errors)
+
+Error response format:
 
 ```json
 {
-  "translated_text": "¡Hola, cómo estás?",
-  "target_language": "es"
+  "detail": {
+    "message": "Error description",
+    "source_language": "Source language",
+    "target_language": "Target language"
+  }
 }
 ```
 
 ## Testing by script
 
-The project includes a comprehensive test script (`test.py`) that validates translations across multiple languages with detailed reporting.
+### Basic Usage
 
-### Running Tests
+```bash
+# Run with default settings (localhost:8000)
+python test.py
 
-Basic usage:
+# Run with custom API URL
+python test.py --url http://your-api-url
+```
+
+### Sample Testing Mode
+
+Running without parameters will execute tests using predefined sample texts in all supported languages:
 
 ```bash
 python test.py
 ```
 
-Available options:
+This will test translations between all language pairs using sample texts in:
 
-- `--list-languages`: Display all supported languages
-- `--source-languages`: Specify source languages to test (e.g., "Spanish French")
-- `--base-url`: Set custom service URL (default: http://localhost:8000)
+- Arabic (ar)
+- Chinese (zh)
+- English (en)
+- French (fr)
+- German (de)
+- Italian (it)
+- Japanese (ja)
+- Korean (ko)
+- Portuguese (pt)
+- Spanish (es)
 
-Example commands:
+### Single Translation Mode
+
+For testing a specific text with defined source and target languages:
 
 ```bash
-# List all available languages
-python test.py --list-languages
-
-# Test specific languages
-python test.py --source-languages Spanish French
-
-# Test with custom server
-python test.py --base-url http://your-server:8000
+python test.py --text "Your text here" --from en --to es
 ```
 
-An output example:
+Parameters:
 
-![test](test.png)
+- `--text`: The text you want to translate
+- `--from`: Source language code
+- `--to`: Target language code
 
+Example:
+
+```bash
+# Translate from English to Spanish
+python test.py --text "Hello world" --from en --to es
+
+# Translate from French to German
+python test.py --text "Bonjour le monde" --from fr --to de
+```
+
+## Output
+
+```bash
+python test.py --text "ciao" --from it --to zh
+╭──────────────────────────────────────────────── Translation Testing ─────────────────────────────────────────────────╮
+│ Starting single translation test                                                                                     │
+│ API URL: http://localhost:8000                                                                                       │
+│ From: Italian                                                                                                        │
+│ To: Chinese                                                                                                          │
+│ Text: ciao                                                                                                           │
+│ Timestamp: 2024-11-28 11:13:08                                                                                       │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+Translation #2
+From: Italian
+To: Chinese
+Original: ciao
+Translated: 再见
+Cultural: 再见
+Time: 0.315s
+Characters: 19
+--------------------------------------------------------------------------------
+
+================================================================================
+Translation Summary
+Total translations: 1
+Failed translations: 0
+Total time: 0.31s
+Average time per translation: 0.315s
+Total characters processed: 19
+Average characters per translation: 19.0
+================================================================================
+```
 
 ## Contributing
 
