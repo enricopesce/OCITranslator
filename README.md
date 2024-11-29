@@ -1,8 +1,8 @@
-# OCI Translator
+# Translator
 
 ## Introduction
 
-The OCI Translator demonstrates the power of using [Oracle Cloud Infrastructure's Generative AI services](https://www.oracle.com/artificial-intelligence/generative-ai/generative-ai-service/) to build practical language applications. 
+Translator demonstrates the power of using [Oracle Cloud Infrastructure's Generative AI services](https://www.oracle.com/artificial-intelligence/generative-ai/generative-ai-service/) to build practical language applications. 
 
 This project showcases how Generative AI services can translate text with a modern LLM that understands context and nuances and how to integrate it into a modern web application.
 
@@ -44,8 +44,8 @@ Oracle Cloud Infrastructure (OCI) Generative AI offers several compelling advant
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/enricopesce/OCITranslator
-cd OCITranslator
+git clone https://github.com/enricopesce/translator
+cd translator
 ```
 
 2. Install required packages:
