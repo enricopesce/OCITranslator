@@ -45,7 +45,7 @@ Oracle Cloud Infrastructure (OCI) Generative AI offers several compelling advant
 
 ```bash
 git clone https://github.com/enricopesce/OCITranslator
-cd oci-translator
+cd OCITranslator
 ```
 
 2. Install required packages:
