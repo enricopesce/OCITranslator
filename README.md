@@ -2,9 +2,9 @@
 
 ## Introduction
 
-Translator demonstrates the power of using [Oracle Cloud Infrastructure's Generative AI services](https://www.oracle.com/artificial-intelligence/generative-ai/generative-ai-service/) to build practical language applications. 
+Translator demonstrates the power of using [Oracle Cloud Infrastructure's Generative AI services](https://www.oracle.com/artificial-intelligence/generative-ai/generative-ai-service/) to build practical language based applications. 
 
-This project showcases how Generative AI services can translate text with a modern LLM that understands context and nuances and how to integrate it into a modern web application.
+This project showcases how OCI Generative AI services can translate text with a modern LLM that understands context and nuances and how to integrate it into a modern web application.
 
 ### Why OCI Generative AI?
 
@@ -179,33 +179,32 @@ python test.py --text "Bonjour le monde" --from fr --to de
 ## Output
 
 ```bash
-python test.py --text "ciao" --from it --to zh
-╭──────────────────────────────────────────────── Translation Testing ─────────────────────────────────────────────────╮
-│ Starting single translation test                                                                                     │
-│ API URL: http://localhost:8000                                                                                       │
-│ From: Italian                                                                                                        │
-│ To: Chinese                                                                                                          │
-│ Text: ciao                                                                                                           │
-│ Timestamp: 2024-11-28 11:13:08                                                                                       │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+python test.py --text "Il più grande nemico della conoscenza non è l'ignoranza, ma l'illusione della conoscenza" --from it --to zh
+╭─────────────────────────────────────────────── Translation Testing ────────────────────────────────────────────────╮
+│ Starting single translation test                                                                                   │
+│ API URL: http://localhost:8000                                                                                     │
+│ From: Italian                                                                                                      │
+│ To: Chinese                                                                                                        │
+│ Text: Il più grande nemico della conoscenza non è l'ignoranza, ma l'illusione della conoscenza                     │
+│ Timestamp: 2024-12-05 10:42:45                                                                                     │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
 Translation #2
 From: Italian
 To: Chinese
-Original: ciao
-Translated: 再见
-Cultural: 再见
-Time: 0.315s
-Characters: 19
+Original: Il più grande nemico della conoscenza non è l'ignoranza, ma l'illusione della conoscenza
+Translated: 最大的敌人不是无知，而是知识的错觉。
+Time: 0.811s
+Characters: 106
 --------------------------------------------------------------------------------
 
 ================================================================================
 Translation Summary
 Total translations: 1
 Failed translations: 0
-Total time: 0.31s
-Average time per translation: 0.315s
-Total characters processed: 19
-Average characters per translation: 19.0
+Total time: 0.81s
+Average time per translation: 0.811s
+Total characters processed: 106
+Average characters per translation: 106.0
 ================================================================================
 ```
